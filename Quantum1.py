@@ -3,14 +3,34 @@ import numpy as np
 N = 5
 M = 5
 
-#wavefunction is a vector of coefficients
-def Hamiltonian(wavefunction):
+#to iterate through spin states, we just count up to 2**n and
+#use the binary representation of the count as our state,
+#replacing 0's with -1's
+def state_from_iteration(i):
+    i_bin = bin(i)[2:]#bin gives you '0b#'
+    i_arr = [int(ch) for ch in i_bin]#now we have an array of 1's and 0's
+    i_arr = list(np.zeros(N - len(i_arr))) + i_arr
+    for k, spin in enumerate(i_arr):#convert all 0's to -1's
+        if spin == 0:
+            i_arr[k] = -1
+    return i_arr
+
+#state is a vector state of system
+def Hcoeff(state):
     #The Ising hamiltonian in 1D
     H = 0
     for i in range(N-1):
-        H += (wavefunction[i])*(wavefunction[i+1])
+        H += (state[i])*(state[i+1])
     return H
 
+#wavefunction is a vector of length 2^n
+#returns a diagonal matrix of modified state 
+def Hsys(wavefunction):
+    Hsysn = np.zeros((2**N,2**N))
+    for i,coeff in enumerate(wavefunction): 
+        Hsysn[i][i] = (Hcoeff(state_from_iteration(i))*coeff)
+    return Hsysn
+    
 class NeuralNet(object):
 
     def __init__(self, N, M):
@@ -23,18 +43,6 @@ class NeuralNet(object):
                 tempL.append(np.random.normal(N,N-1)*np.sqrt(2/(N-1)))
             self.weights.append(tempL)
         self.weights = np.array(self.weights)
-
-    #to iterate through spin states, we just count up to 2**n and
-    #use the binary representation of the count as our state,
-    #replacing 0's with -1's
-    def state_from_iteration(self,i):
-        i_bin = bin(i)[2:]#bin gives you '0b#'
-        i_arr = [int(ch) for ch in i_bin]#now we have an array of 1's and 0's
-        i_arr = list(np.zeros(self.N - len(i_arr))) + i_arr
-        for k, spin in enumerate(i_arr):#convert all 0's to -1's
-            if spin == 0:
-                i_arr[k] = -1
-        return i_arr
 
     #function to compute current wave function
     def psi(self):
@@ -59,7 +67,7 @@ class NeuralNet(object):
         del_psi = np.zeros((2**self.N, self.weights.size))
         for i in range(2**self.N):#iterate through spin states
             spin_state = self.state_from_iteration(i)
-            for weight_index, weight in np.ndenumerate(self.weights):#take partial with respect to each weight
+            for weight_index, _ in np.ndenumerate(self.weights):#take partial with respect to each weight
                 for h in range(2**self.M):#iterate through h states
                     h_state = self.state_from_iteration(h)
                     #next we compute the coefficient for this weight and state
@@ -77,7 +85,7 @@ class NeuralNet(object):
     def Frbm(a, b, hidden, wavefunction, weights):
         E = 0
         for i in range(N):
-            E -= a[i]*wavevfuncion[i]
+            E -= a[i]*wavefunction[i]
         for i in range(M):
             E -= b[i]*hidden[i]
         for i in range(N):
