@@ -1,8 +1,5 @@
 import numpy as np
 
-N = 5
-M = 5
-
 
 def norm(wavefunction):
     return np.sqrt(np.sum([x**2 for x in wavefunction]))
@@ -44,11 +41,11 @@ def Hamiltonian(N):
 
 class NeuralNet(object):
 
-    def __init__(self, N, M, a, b, D):
+    def __init__(self, N, M, D):
         self.N = N
         self.M = M
-        self.a = a*np.ones((N, 1))
-        self.b = b*np.ones((M, 1))
+        self.a = np.random.random(N)
+        self.b = np.random.random(M)
         #D is learning rate (used in update)
         self.D = D
         #Computes a generic hamiltonian matrix for size N
@@ -58,7 +55,8 @@ class NeuralNet(object):
         for i in range(N):
             tempL = []
             for j in range(M):
-                tempL.append(np.random.normal(N,N-1)*np.sqrt(2/(N-1)))
+                # tempL.append(np.random.normal(N,N-1)*np.sqrt(2/(N-1)))
+                tempL.append(np.random.random())
             self.weights.append(tempL)
         self.weights = np.array(self.weights)
 
@@ -92,19 +90,32 @@ class NeuralNet(object):
             spin_state = state_from_iteration(self.N, i)
             param_index = 0
 
-            theta = 1#product term in the wave function
-            for j in range(M):
+            theta = 1 #product term in the wave function
+            for j in range(self.M):
                 theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.b[j])
+                # theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + 2)
+            
+            db = [theta*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)]
+
+            dw = [theta*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)]
             for a_ in self.a:#partial with respect to each a
                 del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.a))*theta
                 param_index += 1
 
-            for [m, n], weight in np.ndenumerate(self.weights):#partial with respect to each weight
-                theta0 = theta/2*np.cosh(np.dot(self.weights[:,n], spin_state) + self.b[n])
-                del_psi[param_index] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.b[n])*spin_state[m]
-                if m == 0:
-                    del_psi[param_index + self.weights.size] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.b[n])*spin_state[m]
+            # for [m, n], weight in np.ndenumerate(self.weights):#partial with respect to each weight
+            #     print(np.dot(self.weights[:,n], spin_state))
+            #     theta0 = theta/(np.cosh(np.dot(self.weights[:,n], spin_state) + self.b[n]))
+            #     del_psi[i, param_index] = theta0*np.sinh(np.dot(self.weights[:,n],spin_state) + self.b[n])*spin_state[m]
+            #     if m == 0:
+            #         del_psi[i, param_index+self.b.size] = theta0*np.sinh(np.dot(self.weights[:,n],spin_state) + self.b[n])*spin_state[m]
+            #     param_index += 1
+
+            for b_ in self.b:
+                del_psi[i, param_index] = db[]
                 param_index += 1
+
+            for [m,n], _ in np.ndenumerate(self.weights):
+
         #compute gradient of the energy using product rule
         right = np.matmul(self.hamiltonian,del_psi)
         return 2*np.real(np.matmul(np.transpose(self.wavefunction),right))
@@ -139,15 +150,15 @@ class NeuralNet(object):
         for i in range(self.N):
             self.a[i] -= self.D*gradient[i]
         for i in range(self.N, self.N+self.M):
-            self.b[i] -= self.D*gradient[i]
+            self.b[i-self.N] -= self.D*gradient[i]
         for i in range(self.N):
             for j in range(self.M):
                 self.weights[i][j] -= self.D*gradient[self.N+self.M+self.M*i+j]
 
 def Train():
-    test = NeuralNet(2,2,0,0,1)
+    test = NeuralNet(2,2,1)
     test.psi()
-    for i in range(5):
+    for i in range(3):
         print(test.wavefunction)
         print(test.EnergyExpectation())
         test.UpdateOnce()
