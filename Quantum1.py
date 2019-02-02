@@ -59,21 +59,22 @@ class NeuralNet(object):
                 tempL.append(np.random.random())
             self.weights.append(tempL)
         self.weights = np.array(self.weights)
+        self.updateWF()
 
-    #function to compute current wave function
-    def psi(self):
-        wf = np.zeros(2**self.N)
-        for i in range(2**self.N):#iterate through spin states
-            spin_state = state_from_iteration(self.N, i)
-            # for h in range(2**self.M):#iterate through h states
-                # h_state = self.state_from_iteration(h)
-                # next we compute the coefficient for this state
-                # wf[i] += np.exp(self.sum_states(spin_state, h_state))
-            x = np.exp(np.dot(spin_state,self.a))
-            y = np.prod(np.matmul(np.transpose(self.weights), spin_state) + self.b)
-            wf[i] = x*y
-        self.wavefunction = wf
-        return wf
+    # #function to compute current wave function
+    # def psi(self):
+    #     wf = np.zeros(2**self.N)
+    #     for i in range(2**self.N):#iterate through spin states
+    #         spin_state = state_from_iteration(self.N, i)
+    #         # for h in range(2**self.M):#iterate through h states
+    #             # h_state = self.state_from_iteration(h)
+    #             # next we compute the coefficient for this state
+    #             # wf[i] += np.exp(self.sum_states(spin_state, h_state))
+    #         x = np.exp(np.dot(spin_state,self.a))
+    #         y = np.prod(np.matmul(np.transpose(self.weights), spin_state) + self.b)
+    #         wf[i] = x*y
+    #     self.wavefunction = wf
+    #     return wf
     
     #helper function to compute the sum in the exponential
     def sum_states(self,spin_state, h_state):
@@ -83,32 +84,33 @@ class NeuralNet(object):
                 summation += self.weights[i,j]*spin_state[i]*h_state[j]
         return summation
     
+    def updateWF(self):
+        wf = []
+        for i in range(2**self.N):#iterate through spin states
+            spin_state = state_from_iteration(self.N, i)
+            theta = 1 #product term in the wave function
+            for j in range(self.M):
+                theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.b[j])
+            x = np.exp(np.dot(spin_state,self.a))
+            theta *= x
+            wf.append(theta)
+        self.wavefunction = wf
+        return wf
+
+    def grad(self):
     def grad_psi(self):
         del_psi = []
         for i in range(2**self.N):#iterate through spin states
             spin_state = state_from_iteration(self.N, i)
             # param_index = 0
-            theta = 1 #product term in the wave function
-            for j in range(self.M):
-                theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.b[j])
-                # theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + 2)
+            self.updateWF()
             
-            db = np.array([theta*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)])
+            db = np.array([self.wavefunction[i]*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)])
 
             dw = np.array([[db[m]*spin_state[n] for m in range(self.M)] for n in range(self.N)])
 
-            da = np.array([spin_state[k]*theta for k in range(self.N)])
-            # for a_ in self.a:#partial with respect to each a
-            #     del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.a))*theta
-            #     param_index += 1
-
-            # for [m, n], weight in np.ndenumerate(self.weights):#partial with respect to each weight
-            #     print(np.dot(self.weights[:,n], spin_state))
-            #     theta0 = theta/(np.cosh(np.dot(self.weights[:,n], spin_state) + self.b[n]))
-            #     del_psi[i, param_index] = theta0*np.sinh(np.dot(self.weights[:,n],spin_state) + self.b[n])*spin_state[m]
-            #     if m == 0:
-            #         del_psi[i, param_index+self.b.size] = theta0*np.sinh(np.dot(self.weights[:,n],spin_state) + self.b[n])*spin_state[m]
-            #     param_index += 1
+            da = np.array([spin_state[k]*self.wavefunction[i] for k in range(self.N)])
+            
             dpi = np.append(np.append(da,db),dw)
             del_psi = np.append(del_psi, dpi)
     def grad_e(self):
@@ -124,22 +126,19 @@ class NeuralNet(object):
     #weights is a NxM matrix
     def Frbm(self, a, b, hidden, wavefunction, weights):
         E = 0
-        for i in range(N):
+        for i in range(self.N):
             E -= a[i]*wavefunction[i]
-        for i in range(M):
+        for i in range(self.M):
             E -= b[i]*hidden[i]
-        for i in range(N):
+        for i in range(self.N):
             v = wavefunction[i]
-            for j in range(M):
+            for j in range(self.M):
                 E -= weights[i][j]*v*hidden[j]
         return E
 
     def EnergyExpectation(self):
         Hsysn = Hsys(self.N, self.wavefunction)
         return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
-
-    def showWaveF(self):
-        return self.wavefunction
 
     def UpdateOnce(self):
         gradient = self.grad_e()
