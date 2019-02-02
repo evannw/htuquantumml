@@ -33,9 +33,11 @@ def Hsys(wavefunction):
     
 class NeuralNet(object):
 
-    def __init__(self, N, M):
+    def __init__(self, N, M, a, b):
         self.N = N
         self.M = M
+        self.a = a*np.ones((1, N))
+        self.b = b*np.ones((1, M))
         self.weights = []
         for i in range(N):
             tempL = []
