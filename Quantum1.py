@@ -83,8 +83,7 @@ class NeuralNet(object):
                 summation += self.weights[i,j]*spin_state[i]*h_state[j]
         return summation
     
-
-    def grad(self):
+    def grad_psi(self):
         del_psi = []
         for i in range(2**self.N):#iterate through spin states
             spin_state = state_from_iteration(self.N, i)
@@ -112,11 +111,11 @@ class NeuralNet(object):
             #     param_index += 1
             dpi = np.append(np.append(da,db),dw)
             del_psi = np.append(del_psi, dpi)
-        #compute gradient of the energy using product rule
-        print(np.shape(del_psi))
-        print(np.shape(self.hamiltonian))
+    def grad_e(self):
+        del_psi = grad_psi()
+        bra_wf = np.transpose(self.wavefunction)
         right = np.matmul(self.hamiltonian,del_psi)
-        return 2*np.real(np.matmul(np.transpose(self.wavefunction),right))
+        return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
     #a is a 1xN vector bias
     #b is a 1xM vector bias
@@ -137,14 +136,13 @@ class NeuralNet(object):
 
     def EnergyExpectation(self):
         Hsysn = Hsys(self.N, self.wavefunction)
-        print(np.shape(self.wavefunction))
-        return np.matmul(self.wavefunction, Hsysn)/norm(self.wavefunction)
+        return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
 
     def showWaveF(self):
         return self.wavefunction
 
     def UpdateOnce(self):
-        gradient = self.grad()
+        gradient = self.grad_e()
         for i in range(self.N):
             self.a[i] -= self.D*gradient[i]
         for i in range(self.N, self.N+self.M):
