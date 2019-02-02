@@ -99,7 +99,7 @@ class NeuralNet(object):
 
             dw = np.array([[db[m]*spin_state[n] for m in range(self.M)] for n in range(self.N)])
 
-            del_psi = np.array[spinstate[k]*theta for k in range(N)]
+            del_psi = np.array([spin_state[k]*theta for k in range(self.N)])
             # for a_ in self.a:#partial with respect to each a
             #     del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.a))*theta
             #     param_index += 1
