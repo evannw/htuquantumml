@@ -6,7 +6,7 @@ M = 5
 #to iterate through spin states, we just count up to 2**n and
 #use the binary representation of the count as our state,
 #replacing 0's with -1's
-def state_from_iteration(i):
+def state_from_iteration(N, i):
     i_bin = bin(i)[2:]#bin gives you '0b#'
     i_arr = [int(ch) for ch in i_bin]#now we have an array of 1's and 0's
     i_arr = list(np.zeros(N - len(i_arr))) + i_arr
@@ -16,7 +16,7 @@ def state_from_iteration(i):
     return i_arr
 
 #state is a vector state of system
-def Hcoeff(state):
+def Hcoeff(N, state):
     #The Ising hamiltonian in 1D
     H = 0
     for i in range(N-1):
@@ -25,7 +25,7 @@ def Hcoeff(state):
 
 #wavefunction is a vector of length 2^n
 #returns a diagonal matrix of modified state 
-def Hsys(wavefunction):
+def Hsys(N, wavefunction):
     Hsysn = np.zeros((2**N,2**N))
     for i,coeff in enumerate(wavefunction): 
         Hsysn[i][i] = (Hcoeff(state_from_iteration(i))*coeff)
