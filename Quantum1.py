@@ -30,9 +30,9 @@ def Hcoeff(N, state):
 #wavefunction is a vector of length 2^n
 #returns a diagonal matrix of modified state 
 def Hsys(N, wavefunction):
-    Hsysn = np.zeros((2**N,2**N))
+    Hsysn = np.zeros(2**N)
     for i,coeff in enumerate(wavefunction): 
-        Hsysn[i][i] = (Hcoeff(N, state_from_iteration(N, i))*coeff)
+        Hsysn[i] = (Hcoeff(N, state_from_iteration(N, i))*coeff)
     return Hsysn
     
 class NeuralNet(object):
@@ -40,8 +40,8 @@ class NeuralNet(object):
     def __init__(self, N, M, a, b):
         self.N = N
         self.M = M
-        self.a = a*np.ones((1, N))
-        self.b = b*np.ones((1, M))
+        self.a = a*np.ones((N, 1))
+        self.b = b*np.ones((M, 1))
         self.weights = []
         self.wavefunction = []
         for i in range(N):
@@ -55,12 +55,12 @@ class NeuralNet(object):
     def psi(self):
         wf = np.zeros(2**self.N)
         for i in range(2**self.N):#iterate through spin states
-            spin_state = self.state_from_iteration(i)
+            spin_state = state_from_iteration(self.N, i)
             # for h in range(2**self.M):#iterate through h states
                 # h_state = self.state_from_iteration(h)
                 # next we compute the coefficient for this state
                 # wf[i] += np.exp(self.sum_states(spin_state, h_state))
-            x = np.exp(np.matmul(spin_state,self.a))
+            x = np.exp(np.dot(spin_state,self.a))
             y = np.prod(np.matmul(np.transpose(self.weights), spin_state) + self.b)
             wf[i] = x*y
         self.wavefunction = wf
@@ -77,7 +77,7 @@ class NeuralNet(object):
     def grad(self, hamiltonian):
         del_psi = np.zeros((2**self.N, self.weights.size + self.a.size + self.b.size))
         for i in range(2**self.N):#iterate through spin states
-            spin_state = self.state_from_iteration(i)
+            spin_state = state_from_iteration(self.N, i)
             param_index = 0
 
             theta = 1#product term in the wave function
@@ -116,8 +116,11 @@ class NeuralNet(object):
 
     def EnergyExpectation(self):
         Hsysn = Hsys(self.N, self.wavefunction)
-        return np.matmul(self.wavefunction, np.matmul(Hsysn,self.wavefunction))/norm(self.wavefunction)
+        print(Hsysn)
+        return np.matmul(self.wavefunction, Hsysn)/norm(self.wavefunction)
 
-test1 = NeuralNet(5, 5, 0, 0)
+    
+
+test1 = NeuralNet(2, 2, 0, 0)
 test1.psi()
 print(test1.EnergyExpectation())
