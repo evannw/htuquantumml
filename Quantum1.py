@@ -100,7 +100,7 @@ class NeuralNet(object):
                 param_index += 1
 
             for [m, n], weight in np.ndenumerate(self.weights):#partial with respect to each weight
-                theta0 = theta/2*cosh(np.dot(self.weights[:,n], spin_state) + self.b[n])
+                theta0 = theta/2*np.cosh(np.dot(self.weights[:,n], spin_state) + self.b[n])
                 del_psi[param_index] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.b[n])*spin_state[m]
                 if m == 0:
                     del_psi[param_index + self.weights.size] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.b[n])*spin_state[m]
@@ -128,8 +128,11 @@ class NeuralNet(object):
 
     def EnergyExpectation(self):
         Hsysn = Hsys(self.N, self.wavefunction)
-        print(Hsysn)
+        print(np.shape(self.wavefunction))
         return np.matmul(self.wavefunction, Hsysn)/norm(self.wavefunction)
+
+    def showWaveF(self):
+        return self.wavefunction
 
     def UpdateOnce(self):
         gradient = self.grad()
@@ -141,6 +144,15 @@ class NeuralNet(object):
             for j in range(self.M):
                 self.weights[i][j] -= self.D*gradient[self.N+self.M+self.M*i+j]
 
-test1 = NeuralNet(2, 2, 0, 0, 1)
-test1.psi()
-print(test1.EnergyExpectation())
+def Train():
+    test = NeuralNet(2,2,0,0,1)
+    test.psi()
+    for i in range(5):
+        print(test.wavefunction)
+        print(test.EnergyExpectation())
+        test.UpdateOnce()
+
+Train()
+# test1 = NeuralNet(2, 2, 0, 0, 1)
+# test1.psi()
+# print(test1.EnergyExpectation())
