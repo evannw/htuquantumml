@@ -9,6 +9,6 @@ class NeuralNet(object):
         for i in range(N):
             tempL = []
             for j in range(M):
-                tempL.append(np.random.normal(N,N-1))
+                tempL.append(np.random.normal(N,N-1)*np.sqrt(2/(N-1)))
             self.weights.append(tempL)
         self.weights = np.array(self.weights)
