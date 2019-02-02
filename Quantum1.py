@@ -75,28 +75,27 @@ class NeuralNet(object):
         return summation
 
     def grad(self, hamiltonian):
-        del_psi = np.zeros((2**self.N, self.weights.size + self.A.size + self.B.size))
+        del_psi = np.zeros((2**self.N, self.weights.size + self.a.size + self.b.size))
         for i in range(2**self.N):#iterate through spin states
             spin_state = self.state_from_iteration(i)
             param_index = 0
 
             theta = 1#product term in the wave function
             for j in range(M):
-                theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.B[j])
-            for a in self.A:#partial with respect to each a
-                del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.A))*theta
+                theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.b[j])
+            for a_ in self.a:#partial with respect to each a
+                del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.a))*theta
                 param_index += 1
 
             for [m, n], weight in np.ndenumerate(self.weights):#partial with respect to each weight
-                theta0 = theta/2*cosh(np.dot(self.weights[:,n], spin_state) + self.B[n])
-                del_psi[param_index] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.B[n])*spin_state[m]
+                theta0 = theta/2*cosh(np.dot(self.weights[:,n], spin_state) + self.b[n])
+                del_psi[param_index] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.b[n])*spin_state[m]
                 if m == 0:
-                    del_psi[param_index + self.weights.size] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.B[n])*spin_state[m]
+                    del_psi[param_index + self.weights.size] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.b[n])*spin_state[m]
                 param_index += 1
         #compute gradient of the energy using product rule
-        left = np.matmul(np.transpose(del_psi),hamiltonian)
         right = np.matmul(hamiltonian,del_psi)
-        return np.matmul(left,self.wavefunction) + np.matmul(np.transpose(self.wavefunction,right))
+        return 2*np.real(np.matmul(np.transpose(self.wavefunction),right))
 
     #a is a 1xN vector bias
     #b is a 1xM vector bias
