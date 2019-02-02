@@ -95,12 +95,14 @@ class NeuralNet(object):
                 theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.b[j])
                 # theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + 2)
             
-            db = [theta*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)]
+            db = np.array([theta*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)])
 
-            dw = [theta*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)]
-            for a_ in self.a:#partial with respect to each a
-                del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.a))*theta
-                param_index += 1
+            dw = np.array([[db[m]*spin_state[n] for m in range(self.M)] for n in range(self.N)])
+
+            del_psi = np.array[spinstate[k]*theta for k in range(N)]
+            # for a_ in self.a:#partial with respect to each a
+            #     del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.a))*theta
+            #     param_index += 1
 
             # for [m, n], weight in np.ndenumerate(self.weights):#partial with respect to each weight
             #     print(np.dot(self.weights[:,n], spin_state))
@@ -110,12 +112,8 @@ class NeuralNet(object):
             #         del_psi[i, param_index+self.b.size] = theta0*np.sinh(np.dot(self.weights[:,n],spin_state) + self.b[n])*spin_state[m]
             #     param_index += 1
 
-            for b_ in self.b:
-                del_psi[i, param_index] = db[]
-                param_index += 1
-
-            for [m,n], _ in np.ndenumerate(self.weights):
-
+            del_psi = np.append(del_psi, db)
+            del_psi = np.append(del_psi, dw)
         #compute gradient of the energy using product rule
         right = np.matmul(self.hamiltonian,del_psi)
         return 2*np.real(np.matmul(np.transpose(self.wavefunction),right))
