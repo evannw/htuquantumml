@@ -64,14 +64,24 @@ class NeuralNet(object):
         return summation
 
     def grad(self, hamiltonian):
-        del_psi = np.zeros((2**self.N, self.weights.size))
+        del_psi = np.zeros((2**self.N, self.weights.size + self.A.size + self.B.size))
         for i in range(2**self.N):#iterate through spin states
             spin_state = self.state_from_iteration(i)
-            for weight_index, _ in np.ndenumerate(self.weights):#take partial with respect to each weight
-                for h in range(2**self.M):#iterate through h states
-                    h_state = self.state_from_iteration(h)
-                    #next we compute the coefficient for this weight and state
-                    del_psi[i,weight_index] += spin_state[weight_index[0]]*h_state[weight_index[1]]*np.exp(self.sum_states(spin_state, h_state))
+            param_index = 0
+
+            theta = 1#product term in the wave function
+            for j in range(M):
+                theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.B[j])
+            for a in self.A:#partial with respect to each a
+                del_psi[i,param_index] = spin_state[param_index]*np.exp(np.dot(spin_state,self.A))*theta
+                param_index += 1
+
+            for [m, n], weight in np.ndenumerate(self.weights):#partial with respect to each weight
+                theta0 = theta/2*cosh(np.dot(self.weights[:,n], spin_state) + self.B[n])
+                del_psi[param_index] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.B[n])*spin_state[m]
+                if m == 0:
+                    del_psi[param_index + self.weights.size] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.B[n])*spin_state[m]
+                param_index += 1
         #compute gradient of the energy using product rule
         left = np.matmul(np.transpose(del_psi),hamiltonian)
         right = np.matmul(hamiltonian,del_psi)
