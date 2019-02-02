@@ -7,8 +7,6 @@ M = 5
 def norm(wavefunction):
     return np.sqrt(np.sum([x**2 for x in wavefunction]))
 
-
-
 #to iterate through spin states, we just count up to 2**n and
 #use the binary representation of the count as our state,
 #replacing 0's with -1's
@@ -34,7 +32,7 @@ def Hcoeff(N, state):
 def Hsys(N, wavefunction):
     Hsysn = np.zeros((2**N,2**N))
     for i,coeff in enumerate(wavefunction): 
-        Hsysn[i][i] = (Hcoeff(state_from_iteration(i))*coeff)
+        Hsysn[i][i] = (Hcoeff(N, state_from_iteration(N, i))*coeff)
     return Hsysn
     
 class NeuralNet(object):
@@ -58,10 +56,13 @@ class NeuralNet(object):
         wf = np.zeros(2**self.N)
         for i in range(2**self.N):#iterate through spin states
             spin_state = self.state_from_iteration(i)
-            for h in range(2**self.M):#iterate through h states
-                h_state = self.state_from_iteration(h)
-                #next we compute the coefficient for this state
-                wf[i] += np.exp(self.sum_states(spin_state, h_state))
+            # for h in range(2**self.M):#iterate through h states
+                # h_state = self.state_from_iteration(h)
+                # next we compute the coefficient for this state
+                # wf[i] += np.exp(self.sum_states(spin_state, h_state))
+            x = np.exp(np.matmul(spin_state,self.a))
+            y = np.prod(np.matmul(np.transpose(self.weights), spin_state) + self.b)
+            wf[i] = x*y
         self.wavefunction = wf
         return wf
     
@@ -104,6 +105,10 @@ class NeuralNet(object):
                 E -= weights[i][j]*v*hidden[j]
         return E
 
-    def expectedValue(self):
+    def EnergyExpectation(self):
         Hsysn = Hsys(self.N, self.wavefunction)
         return np.matmul(self.wavefunction, np.matmul(Hsysn,self.wavefunction))/norm(self.wavefunction)
+
+test1 = NeuralNet(5, 5, 0, 0)
+test1.psi()
+print(test1.EnergyExpectation())
