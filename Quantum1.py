@@ -28,20 +28,31 @@ def Hcoeff(N, state):
     return H
 
 #wavefunction is a vector of length 2^n
-#returns a diagonal matrix of modified state 
+#returns a vector that's a modified wavefunction
 def Hsys(N, wavefunction):
     Hsysn = np.zeros(2**N)
     for i,coeff in enumerate(wavefunction): 
         Hsysn[i] = (Hcoeff(N, state_from_iteration(N, i))*coeff)
     return Hsysn
     
+#Returns a Hamiltonian diagonal matrix of size 2^nx2^n using Ising model
+def Hamiltonian(N):
+    Hsysn = np.zeros((2**N,2**N))
+    for i in range(N): 
+        Hsysn[i][i] = Hcoeff(N, state_from_iteration(N, i))
+    return Hsysn
+
 class NeuralNet(object):
 
-    def __init__(self, N, M, a, b):
+    def __init__(self, N, M, a, b, D):
         self.N = N
         self.M = M
         self.a = a*np.ones((N, 1))
         self.b = b*np.ones((M, 1))
+        #D is learning rate (used in update)
+        self.D = D
+        #Computes a generic hamiltonian matrix for size N
+        self.hamiltonian = Hamiltonian(N)
         self.weights = []
         self.wavefunction = []
         for i in range(N):
@@ -74,7 +85,8 @@ class NeuralNet(object):
                 summation += self.weights[i,j]*spin_state[i]*h_state[j]
         return summation
 
-    def grad(self, hamiltonian):
+
+    def grad(self):
         del_psi = np.zeros((2**self.N, self.weights.size + self.a.size + self.b.size))
         for i in range(2**self.N):#iterate through spin states
             spin_state = state_from_iteration(self.N, i)
@@ -94,7 +106,7 @@ class NeuralNet(object):
                     del_psi[param_index + self.weights.size] = theta0*2*np.sinh(np.dot(self.weights[:n],spin_state) + self.b[n])*spin_state[m]
                 param_index += 1
         #compute gradient of the energy using product rule
-        right = np.matmul(hamiltonian,del_psi)
+        right = np.matmul(self.hamiltonian,del_psi)
         return 2*np.real(np.matmul(np.transpose(self.wavefunction),right))
 
     #a is a 1xN vector bias
@@ -102,7 +114,7 @@ class NeuralNet(object):
     #hidden is a 1xM vector
     #wavefunction is a 1xN vector
     #weights is a NxM matrix
-    def Frbm(a, b, hidden, wavefunction, weights):
+    def Frbm(self, a, b, hidden, wavefunction, weights):
         E = 0
         for i in range(N):
             E -= a[i]*wavefunction[i]
@@ -119,8 +131,16 @@ class NeuralNet(object):
         print(Hsysn)
         return np.matmul(self.wavefunction, Hsysn)/norm(self.wavefunction)
 
-    
+    def UpdateOnce(self):
+        gradient = self.grad()
+        for i in range(self.N):
+            self.a[i] -= self.D*gradient[i]
+        for i in range(self.N, self.N+self.M):
+            self.b[i] -= self.D*gradient[i]
+        for i in range(self.N):
+            for j in range(self.M):
+                self.weights[i][j] -= self.D*gradient[self.N+self.M+self.M*i+j]
 
-test1 = NeuralNet(2, 2, 0, 0)
+test1 = NeuralNet(2, 2, 0, 0, 1)
 test1.psi()
 print(test1.EnergyExpectation())
