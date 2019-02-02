@@ -83,7 +83,6 @@ class NeuralNet(object):
                 summation += self.weights[i,j]*spin_state[i]*h_state[j]
         return summation
 
-
     def grad(self):
         del_psi = np.zeros((2**self.N, self.weights.size + self.a.size + self.b.size))
         for i in range(2**self.N):#iterate through spin states
