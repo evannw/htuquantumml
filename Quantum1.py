@@ -3,6 +3,8 @@ import numpy as np
 class NeuralNet(object):
 
     def __init__(self, N, M):
+        self.N = N
+        self.M = M
         self.weights = []
         for i in range(N):
             tempL = []
