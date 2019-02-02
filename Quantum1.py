@@ -3,10 +3,14 @@ import numpy as np
 N = 5
 M = 5
 
+
+def norm(wavefunction):
+    return np.sqrt(np.sum([x**2 for x in wavefunction]))
+
 #to iterate through spin states, we just count up to 2**n and
 #use the binary representation of the count as our state,
 #replacing 0's with -1's
-def state_from_iteration(i):
+def state_from_iteration(N, i):
     i_bin = bin(i)[2:]#bin gives you '0b#'
     i_arr = [int(ch) for ch in i_bin]#now we have an array of 1's and 0's
     i_arr = list(np.zeros(N - len(i_arr))) + i_arr
@@ -16,7 +20,7 @@ def state_from_iteration(i):
     return i_arr
 
 #state is a vector state of system
-def Hcoeff(state):
+def Hcoeff(N, state):
     #The Ising hamiltonian in 1D
     H = 0
     for i in range(N-1):
@@ -25,18 +29,21 @@ def Hcoeff(state):
 
 #wavefunction is a vector of length 2^n
 #returns a diagonal matrix of modified state 
-def Hsys(wavefunction):
+def Hsys(N, wavefunction):
     Hsysn = np.zeros((2**N,2**N))
     for i,coeff in enumerate(wavefunction): 
-        Hsysn[i][i] = (Hcoeff(state_from_iteration(i))*coeff)
+        Hsysn[i][i] = (Hcoeff(N, state_from_iteration(N, i))*coeff)
     return Hsysn
     
 class NeuralNet(object):
 
-    def __init__(self, N, M):
+    def __init__(self, N, M, a, b):
         self.N = N
         self.M = M
+        self.a = a*np.ones((1, N))
+        self.b = b*np.ones((1, M))
         self.weights = []
+        self.wavefunction = []
         for i in range(N):
             tempL = []
             for j in range(M):
@@ -49,10 +56,14 @@ class NeuralNet(object):
         wf = np.zeros(2**self.N)
         for i in range(2**self.N):#iterate through spin states
             spin_state = self.state_from_iteration(i)
-            for h in range(2**self.M):#iterate through h states
-                h_state = self.state_from_iteration(h)
-                #next we compute the coefficient for this state
-                wf[i] += np.exp(self.sum_states(spin_state, h_state))
+            # for h in range(2**self.M):#iterate through h states
+                # h_state = self.state_from_iteration(h)
+                # next we compute the coefficient for this state
+                # wf[i] += np.exp(self.sum_states(spin_state, h_state))
+            x = np.exp(np.matmul(spin_state,self.a))
+            y = np.prod(np.matmul(np.transpose(self.weights), spin_state) + self.b)
+            wf[i] = x*y
+        self.wavefunction = wf
         return wf
     
     #helper function to compute the sum in the exponential
@@ -85,7 +96,7 @@ class NeuralNet(object):
         #compute gradient of the energy using product rule
         left = np.matmul(np.transpose(del_psi),hamiltonian)
         right = np.matmul(hamiltonian,del_psi)
-        return np.matmul(left,self.psi()) + np.matmul(np.transpose(self.psi()),right)
+        return np.matmul(left,self.wavefunction) + np.matmul(np.transpose(self.wavefunction,right))
 
     #a is a 1xN vector bias
     #b is a 1xM vector bias
@@ -103,3 +114,11 @@ class NeuralNet(object):
             for j in range(M):
                 E -= weights[i][j]*v*hidden[j]
         return E
+
+    def EnergyExpectation(self):
+        Hsysn = Hsys(self.N, self.wavefunction)
+        return np.matmul(self.wavefunction, np.matmul(Hsysn,self.wavefunction))/norm(self.wavefunction)
+
+test1 = NeuralNet(5, 5, 0, 0)
+test1.psi()
+print(test1.EnergyExpectation())
