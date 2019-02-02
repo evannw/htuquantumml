@@ -1,5 +1,16 @@
 import numpy as np
 
+N = 5
+M = 5
+
+#wavefunction is a vector of coefficients
+def Hamiltonian(wavefunction):
+    #The Ising hamiltonian in 1D
+    H = 0
+    for i in range(N-1):
+        H += (wavefunction[i])*(wavefunction[i+1])
+    return H
+
 class NeuralNet(object):
 
     def __init__(self, N, M):
@@ -34,7 +45,8 @@ class NeuralNet(object):
                 h_state = self.state_from_iteration(h)
                 #next we compute the coefficient for this state
                 wf[i] += np.exp(self.sum_states(spin_state, h_state))
-        return wf      
+        return wf
+    
     #helper function to compute the sum in the exponential
     def sum_states(self,spin_state, h_state):
         summation = 0
@@ -56,6 +68,20 @@ class NeuralNet(object):
         left = np.matmul(np.transpose(del_psi),hamiltonian)
         right = np.matmul(hamiltonian,del_psi)
         return np.matmul(left,self.psi()) + np.matmul(np.transpose(self.psi()),right)
-    
-    def print_weights(self):
-        print(self.weights)
+
+    #a is a 1xN vector bias
+    #b is a 1xM vector bias
+    #hidden is a 1xM vector
+    #wavefunction is a 1xN vector
+    #weights is a NxM matrix
+    def Frbm(a, b, hidden, wavefunction, weights):
+        E = 0
+        for i in range(N):
+            E -= a[i]*wavevfuncion[i]
+        for i in range(M):
+            E -= b[i]*hidden[i]
+        for i in range(N):
+            v = wavefunction[i]
+            for j in range(M):
+                E -= weights[i][j]*v*hidden[j]
+        return E
