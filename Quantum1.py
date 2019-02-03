@@ -238,7 +238,7 @@ def measure(N,M,rate,iterations,test_site,h_function):
     energies_list = [[] for i in range(iterations)]
     max_len = 0
     for n in range(iterations):
-        energies, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(N,M,rate,0.00001,h_function))
+        energies, wf, MEEx, MEEy, MEEz = np.real(TrainIterations(N,M,rate,2000,h_function))
         corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
         mag_list[n] = np.array([MEEx,MEEy,MEEz])
         #plt.plot(EE)
