@@ -43,7 +43,27 @@ def Hamiltonian(N):
     return Hsysn
 
 def Hamiltonian_heisenberg(N):
-    
+    ham = np.zeros((2**N,2**N))
+    for i in range(N-1):
+        product_terms = [np.identity(2) for i in range(N)]
+        #compute x products
+        product_terms[i:i+2] = [sx,sx]
+        x_prod = np.ones(1)
+        for term in product_terms:
+            x_prod = np.kron(x_prod,term)
+        #compute y products
+        product_terms[i:i+2] = [sy,sy]
+        y_prod = np.ones(1)
+        for term in product_terms:
+            y_prod = np.kron(y_prod,term)
+        #compute z products
+        product_terms[i:i+2] = [sz,sz]
+        z_prod = np.ones(1)
+        for term in product_terms:
+            z_prod = np.kron(z_prod,term)
+        #add all the products to the hamiltonian
+        ham = ham + x_prod + y_prod + z_prod
+    return ham
 
 class NeuralNet(object):
 
@@ -55,7 +75,7 @@ class NeuralNet(object):
         #D is learning rate (used in update)
         self.D = D
         #Computes a generic hamiltonian matrix for size N
-        self.hamiltonian = Hamiltonian(N)
+        self.hamiltonian = Hamiltonian_heisenberg(N)
         self.weights = []
         self.wavefunction = []
         for i in range(N):
@@ -122,7 +142,7 @@ class NeuralNet(object):
 
 
 def Train(epsilon):
-    test = NeuralNet(3,3,0.1)
+    test = NeuralNet(5,5,0.1)
     training = []
     i = 0
     while(True):
