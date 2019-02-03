@@ -249,9 +249,9 @@ test_site = 1
 corr_list = np.zeros((iterations,3,sites-1))#3 represents the x, y, and z correlations
 mag_list = np.zeros((iterations,3,sites))
 for n in range(iterations):
-    EE, wf, MEEx, MEEy, MEEz = np.real(Train(0.00001,sites,hs,rate))
+    EE, wf, MEEx, MEEy, MEEz = np.real(Train(sites,hs,rate,0.00001))
     corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
-	mag_list[n] = np.array([MEEx,MEEy,MEEz])
+    mag_list[n] = np.array([MEEx,MEEy,MEEz])
 
 mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
 corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
