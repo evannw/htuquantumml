@@ -39,6 +39,14 @@ def Hamiltonian(N):
         Hsysn[i][i] = Hcoeff(N, state_from_iteration(N, i))
     return Hsysn
 
+
+def T_ising(N):
+    for i in range(N):
+        for j in range(N):
+            np.matrix
+            polyX
+    numpy.kron
+
 class NeuralNet(object):
 
     def __init__(self, N, M, D):
