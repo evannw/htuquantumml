@@ -65,6 +65,29 @@ def T_ising(N,J,h):
             valStore += J*current
         finalVal += h*singleCurrent
     return valStore+finalVal
+    
+def Hamiltonian_heisenberg(N):
+    ham = np.zeros((2**N,2**N))
+    for i in range(N-1):
+        product_terms = [np.identity(2) for i in range(N)]
+        #compute x products
+        product_terms[i:i+2] = [sx,sx]
+        x_prod = np.ones(1)
+        for term in product_terms:
+            x_prod = np.kron(x_prod,term)
+        #compute y products
+        product_terms[i:i+2] = [sy,sy]
+        y_prod = np.ones(1)
+        for term in product_terms:
+            y_prod = np.kron(y_prod,term)
+        #compute z products
+        product_terms[i:i+2] = [sz,sz]
+        z_prod = np.ones(1)
+        for term in product_terms:
+            z_prod = np.kron(z_prod,term)
+        #add all the products to the hamiltonian
+        ham = ham + x_prod + y_prod + z_prod
+    return ham
 
 def T_isingWrapper(N):
     return T_ising(N, 0.1, 0.1)
@@ -124,15 +147,18 @@ class NeuralNet(object):
         return del_psi
     def grad_e(self):
         del_psi = self.grad_psi()
-        bra_wf = np.transpose(self.wavefunction)
+        bra_wf = np.conjugate(self.wavefunction)
 
         right = np.matmul(self.hamiltonian,del_psi)
         return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
     def EnergyExpectation(self):
-        Hsysn = np.matmul(self.hamiltonian, self.wavefunction)
+        return np.dot(np.conjugate(self.wavefunction),np.matmul(self.hamiltonian,self.wavefunction))/norm(self.wavefunction)
+        #Hsysn = Hsys(self.N, self.wavefunction)
+        #return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
+        #Hsysn = np.matmul(self.hamiltonian, self.wavefunction)
         # Hsysn = Hsys(self.N, self.wavefunction)
-        return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
+        #return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
 
     def UpdateOnce(self):
         gradient = self.grad_e()
