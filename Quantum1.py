@@ -227,9 +227,9 @@ def TrainIterations(N, M, rate, iterations, hamiltonian):
     return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
 
 def measure(N,M,rate,iterations,test_site,h_function):
-    SC = open("SpinCorrelations.txt", "w")
+    """SC = open("SpinCorrelations.txt", "w")
     MZ = open("Magnetizations.txt", "w")
-    EE = open("EnergyExpectations.txt", "w")
+    EE = open("EnergyExpectations.txt", "w")"""
     corr_list = np.zeros((iterations,3,N-1)) #3 represents the x, y, and z correlations
     mag_list = np.zeros((iterations,3,N))
     #plt.figure(0)
@@ -247,23 +247,25 @@ def measure(N,M,rate,iterations,test_site,h_function):
         energies_list[n] = energies
         if len(energies) > max_len:
             max_len = len(energies)
-    EE.write("[")
+    #EE.write("[")
     for i in range(len(energies_list)):
         last = energies_list[i][-1]
         energies_list[i] = energies_list[i] + [last for j in range(max_len - len(energies_list[i]))]
-        if i != 0:
+        """if i != 0:
             EE.write("), array(" + str(energies_list[i]))
         else:
             EE.write("array(" + str(energies_list[0]))
-    EE.write(")]")
-    mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
-    MZ.write(str(mag_list))
-    corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
-    SC.write(str(corr_list))
-
-    EE.close()
-    MZ.close()
-    SC.close()
+    EE.write(")]")"""
+    mag_list = np.sum(mag_list,axis = 0)/iterations#average magnetizations
+    #MZ.write(str(mag_list))
+    corr_list = np.sum(corr_list,axis=0)/iterations#calculate average correlations
+    #SC.write(str(corr_list))
+    np.save('mag_list.npy',mag_list)
+    np.save('corr_list.npy',corr_list)
+    np.save('energies_list',np.array(energies_list))
+    #EE.close()
+    #MZ.close()
+    #SC.close()
     # plt.figure(0)
     # for EE in energies_list:
     #     plt.plot(EE)
