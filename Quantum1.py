@@ -292,4 +292,4 @@ def measure(N,M,rate,iterations,test_site,h_function):
 
     # plt.show()
 
-measure(6,4,0.01,1,0,Hamiltonian_heisenberg)
+measure(5,10,0.01,5,0,Hamiltonian_heisenberg)
