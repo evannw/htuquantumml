@@ -42,6 +42,7 @@ def Hamiltonian(N):
         Hsysn[i][i] = Hcoeff(N, state_from_iteration(N, i))
     return Hsysn
 
+#Returns a Hamiltonian diagonal matrix of size 2^nx2^n using T_Ising model
 def T_ising(N,J,h):
     valStore = np.zeros((2**N,2**N))
     finalVal = np.zeros((2**N,2**N))
@@ -65,7 +66,7 @@ def T_ising(N,J,h):
             valStore += J*current
         finalVal += h*singleCurrent
     return valStore+finalVal
-    
+
 def Hamiltonian_heisenberg(N):
     ham = np.zeros((2**N,2**N))
     for i in range(N-1):
@@ -91,7 +92,30 @@ def Hamiltonian_heisenberg(N):
 
 def T_isingWrapper(N):
     return T_ising(N, 0.1, 0.1)
-        
+
+def magnetization(N):
+    valStoreX = np.zeros((2**N,2**N))
+    valStoreY = np.zeros((2**N,2**N))
+    valStoreZ = np.zeros((2**N,2**N))
+    for i in range(N):
+        singleCurrentX = np.array([1])
+        singleCurrentY = np.array([1])
+        singleCurrentZ = np.array([1])
+        for j in range(N):
+            if j!=i:
+                singleCurrentX = np.kron(singleCurrentX, np.identity(2))
+                singleCurrentY = np.kron(singleCurrentY, np.identity(2))
+                singleCurrentZ = np.kron(singleCurrentZ, np.identity(2))
+            else:
+                singleCurrentX = np.kron(singleCurrentX, sx)
+                singleCurrentY = np.kron(singleCurrentY, sy)
+                singleCurrentZ = np.kron(singleCurrentZ, sz)
+        valStoreX += J*singleCurrentX
+        valStoreY += J*singleCurrentY
+        valStoreZ += J*singleCurrentZ
+    return [valStoreX,valStoreY,valStoreZ]
+
+
 class NeuralNet(object):
 
     def __init__(self, N, M, D, Hamiltonian):
