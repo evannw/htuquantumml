@@ -95,9 +95,9 @@ def T_isingWrapper(N):
     return T_ising(N, 0.1, 0.1)
 
 def magnetization(N):
-    valStoreX = np.zeros((2**N,2**N))
-    valStoreY = np.zeros((2**N,2**N))
-    valStoreZ = np.zeros((2**N,2**N))
+    valStoreX = []
+    valStoreY = []
+    valStoreZ = []
     for i in range(N):
         singleCurrentX = np.array([1])
         singleCurrentY = np.array([1])
@@ -111,10 +111,11 @@ def magnetization(N):
                 singleCurrentX = np.kron(singleCurrentX, sx)
                 singleCurrentY = np.kron(singleCurrentY, sy)
                 singleCurrentZ = np.kron(singleCurrentZ, sz)
-        valStoreX += J*singleCurrentX
-        valStoreY += J*singleCurrentY
-        valStoreZ += J*singleCurrentZ
-    return [valStoreX,valStoreY,valStoreZ]
+        valStoreX.append(singleCurrentX)
+        valStoreY.append(singleCurrentY)
+        valStoreZ.append(singleCurrentZ)
+    return valStoreX,valStoreY,valStoreZ
+
 
 
 class NeuralNet(object):
@@ -177,6 +178,13 @@ class NeuralNet(object):
         #Hsysn = np.matmul(self.hamiltonian, self.wavefunction)
         # Hsysn = Hsys(self.N, self.wavefunction)
         #return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
+    
+    def MagnetizationEE(self):
+        operatorX, operatorY, operatorZ = magnetization(self.N)
+        operatorX = [np.dot(np.conjugate(self.wavefunction),np.matmul(x,self.wavefunction))/norm(self.wavefunction) for x in operatorX]
+        operatorY = [np.dot(np.conjugate(self.wavefunction),np.matmul(y,self.wavefunction))/norm(self.wavefunction) for y in operatorY]
+        operatorZ = [np.dot(np.conjugate(self.wavefunction),np.matmul(z,self.wavefunction))/norm(self.wavefunction) for z in operatorZ]
+        return operatorX, operatorY, operatorZ
 
     def UpdateOnce(self):
         gradient = self.grad_e()
@@ -190,25 +198,30 @@ class NeuralNet(object):
         self.updateWF()
 
 
-def Train(epsilon):
-    test = NeuralNet(3,3,0.1, T_isingWrapper)
-    training = []
+def Train(N, M, epsilon):
+    test = NeuralNet(N, M, 0.1, T_isingWrapper)
+    trainingEE = []
     i = 0
     while(True):
         # print(test.wavefunction)
-        training.append(test.EnergyExpectation())
-        print(training[i])
+        trainingEE.append(test.EnergyExpectation())
+        
+        # print(trainingEE[i])
         if i>=5:
             breaker = True
             for j in range(4):
-                if abs(training[len(training)-j-1] - training[len(training)-j-2]) >= epsilon:
+                if abs(trainingEE[len(trainingEE)-j-1] - trainingEE[len(trainingEE)-j-2]) >= epsilon:
                     breaker = False
             if breaker==True:
-                return training
+                MEEx, MEEy, MEEz = test.MagnetizationEE()
+                return trainingEE, MEEx, MEEy, MEEz
         test.UpdateOnce()
         i += 1
         
-energies = np.real(Train(0.00001))
+EE, MEEx, MEEy, MEEz = np.real(Train(3, 3, 0.00001))
 plt.figure(0)
-plt.plot(energies)
+plt.plot(EE)
+plt.bar(range(3), MEEx)
+plt.bar(range(3), MEEy)
+plt.bar(range(3), MEEz)
 plt.show()
