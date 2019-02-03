@@ -1,14 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot(spinCorrelations, magnetizations, energyExpectations):
+def plot(N, test_site, spinCorrelations, magnetizations, energyExpectations):
+    # SC = open(spinCorrelations, "r")
+    # MZ = open(magnetizations, "r")
+    # EE = open(energyExpectations, "r")
     energies_list = np.load(energyExpectations)
     mag_list = np.load(magnetizations)
-    spinC_list = np.load(spinCorrelations)
-    finalEnergy = np.around(EE[len(EE)-1],decimals=2)
-    plt.annotate(str(finalEnergy), (len(EE), finalEnergy))
+    corr_list = np.load(spinCorrelations)
     plt.figure(0)
     for EE in energies_list:
+        finalEnergy = np.around(EE[len(EE)-1],decimals=2)
+        plt.annotate(str(finalEnergy), (len(EE), finalEnergy))
         plt.plot(EE)
     plt.title('Energy During Training')
     plt.xlabel('Iteration')
@@ -33,4 +36,4 @@ def plot(spinCorrelations, magnetizations, energyExpectations):
 
     plt.show()
 
-plot('corr_list.npy','mag_list.npy','energies_list.npy')
+plot(6,0,"corr_list.npy","mag_list.npy","energies_list.npy")
