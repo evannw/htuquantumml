@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot(N, spinCorrelations, magnetizations, energyExpectations):
-    SC = open(spinCorrelations, "r")
-    MZ = open(magnetizations, "r")
-    EE = open(energyExpectations, "r")
-    energies_list = np.load(EE)
-    mag_list = np.load(MZ)
-    corr_list = np.load(SC)
+def plot(N, test_site, spinCorrelations, magnetizations, energyExpectations):
+    # SC = open(spinCorrelations, "r")
+    # MZ = open(magnetizations, "r")
+    # EE = open(energyExpectations, "r")
+    energies_list = np.load(energyExpectations)
+    mag_list = np.load(magnetizations)
+    corr_list = np.load(spinCorrelations)
     plt.figure(0)
     for EE in energies_list:
         finalEnergy = np.around(EE[len(EE)-1],decimals=2)
@@ -36,4 +36,4 @@ def plot(N, spinCorrelations, magnetizations, energyExpectations):
 
     plt.show()
 
-plot(6,"SpinCorrelations.npy","Magnetizations.npy","EnergyExpectations.npy")
+plot(6,0,"corr_list.npy","mag_list.npy","energies_list.npy")
