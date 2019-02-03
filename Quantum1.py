@@ -66,16 +66,16 @@ class NeuralNet(object):
         for i in range(2**self.N):#iterate through spin states
             spin_state = state_from_iteration(self.N, i)
             theta = 1 #product term in the wave function
-            print("Weights")
-            print(self.weights)
-            print("Spin State")
-            print(spin_state)
+            #print("Weights")
+            #print(self.weights)
+            #print("Spin State")
+            #print(spin_state)
             for j in range(self.M):
                 theta *= 2*np.cosh(np.dot(self.weights[:,j], spin_state) + self.b[j])
             x = np.exp(np.dot(spin_state,self.a))
             theta *= x
             wf.append(theta)
-        self.wavefunction = wf
+        self.wavefunction = wf/norm(wf)
         return wf
 
     def grad_psi(self):
@@ -95,8 +95,8 @@ class NeuralNet(object):
     def grad_e(self):
         del_psi = self.grad_psi()
         bra_wf = np.transpose(self.wavefunction)
-        print(np.shape(self.hamiltonian))
-        print(np.shape(del_psi))
+        #print(np.shape(self.hamiltonian))
+        #print(np.shape(del_psi))
         right = np.matmul(self.hamiltonian,del_psi)
         return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
@@ -117,8 +117,8 @@ class NeuralNet(object):
 
 
 def Train():
-    test = NeuralNet(2,2,1)
-    for i in range(3):
+    test = NeuralNet(3,3,0.1)
+    for i in range(50):
         print(test.wavefunction)
         print(test.EnergyExpectation())
         test.UpdateOnce()
