@@ -100,7 +100,7 @@ def correlation(site,wavefunction,direction):
     return product_list
 
 def T_isingWrapper(N):
-    return T_ising(N, 0.1, 0.1)
+    return T_ising(N, 1, 0.001)
 
 def magnetization(N):
     valStoreX = []
@@ -139,6 +139,7 @@ class NeuralNet(object):
         self.hamiltonian = h_function(self.N)
         self.wavefunction = []
         self.weights = np.random.rand(N,M) + 1j*np.random.rand(N,M)
+        # self.weights = np.random.normal(N,M)
         self.updateWF()
 
     def updateWF(self):
@@ -200,9 +201,9 @@ class NeuralNet(object):
                 self.weights[i][j] -= self.D*gradient[self.N+self.M+self.M*i+j]
         self.updateWF()
 
-
-def Train(N, M, rate, epsilon, h_function):
-    test = NeuralNet(N,M, rate, h_function)
+#Train until energy converges to within epsilon
+def TrainEpsilon(N, M, rate, epsilon, hamiltonian):
+    test = NeuralNet(N,M, rate, hamiltonian)
     trainingEE = []
     i = 0
     while(True):
@@ -220,13 +221,26 @@ def Train(N, M, rate, epsilon, h_function):
         test.UpdateOnce()
         i += 1
 
+#Train over a certain number of iterations
+def TrainIterations(N, M, rate, iterations, hamiltonian):
+    test = NeuralNet(N,M, rate, hamiltonian)
+    trainingEE = []
+    for i in range(iterations):
+        # print(test.wavefunction)
+        trainingEE.append(test.EnergyExpectation())
+        test.UpdateOnce()
+    MEEx, MEEy, MEEz = test.MagnetizationEE()
+    return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
+
 def measure_and_plot(N,M,rate,iterations,test_site,h_function):
     corr_list = np.zeros((iterations,3,N-1))#3 represents the x, y, and z correlations
     mag_list = np.zeros((iterations,3,N))
     energies_list = [[] for i in range(iterations)]
     max_len = 0
     for n in range(iterations):
-        EE, wf, MEEx, MEEy, MEEz = np.real(Train(N,M,rate,0.00001,h_function))
+
+        EE, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(N,M,rate,0.00001,h_function))
+
         corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
         mag_list[n] = np.array([MEEx,MEEy,MEEz])
         energies_list[n] = EE
@@ -238,11 +252,10 @@ def measure_and_plot(N,M,rate,iterations,test_site,h_function):
     mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
     corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
 
-    #plt.figure(0)
-    #plt.plot(energies)
-    #plt.title('Energy During Training')
-    #plt.xlabel('Iteration')
-
+    plt.figure(0)
+    [plt.plot(energies) for energies in energies_list]
+    plt.title('Energy During Training')
+    plt.xlabel('Iteration')
     #plot magnetizations
     fig, axarr = plt.subplots(nrows=3,sharex=True)
     for i in range(3):
