@@ -226,7 +226,7 @@ def TrainIterations(N, M, rate, iterations, hamiltonian):
     MEEx, MEEy, MEEz = test.MagnetizationEE()
     return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
 
-def measure_and_plot(N,M,rate,iterations,test_site,h_function):
+def measure(N,M,rate,iterations,test_site,h_function):
     SC = open("SpinCorrelations.txt", "w")
     MZ = open("Magnetizations.txt", "w")
     EE = open("EnergyExpectations.txt", "w")
@@ -290,4 +290,4 @@ def measure_and_plot(N,M,rate,iterations,test_site,h_function):
 
     # plt.show()
 
-measure_and_plot(6,4,0.01,1,0,Hamiltonian_heisenberg)
+measure(6,4,0.01,1,0,Hamiltonian_heisenberg)
