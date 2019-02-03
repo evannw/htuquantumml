@@ -75,8 +75,8 @@ class NeuralNet(object):
             x = np.exp(np.dot(spin_state,self.a))
             theta *= x
             wf.append(theta)
-        self.wavefunction = wf/norm(wf)
-        return wf
+        self.wavefunction = wf/(norm(wf))
+        return self.wavefunction
 
     def grad_psi(self):
         del_psi = np.zeros((2**self.N, self.N + self.M + self.N*self.M))
@@ -95,8 +95,7 @@ class NeuralNet(object):
     def grad_e(self):
         del_psi = self.grad_psi()
         bra_wf = np.transpose(self.wavefunction)
-        #print(np.shape(self.hamiltonian))
-        #print(np.shape(del_psi))
+
         right = np.matmul(self.hamiltonian,del_psi)
         return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
@@ -116,11 +115,25 @@ class NeuralNet(object):
         self.updateWF()
 
 
-def Train():
+def Train(epsilon):
     test = NeuralNet(3,3,0.1)
-    for i in range(50):
+    training = []
+    i = 0
+    while(True):
         print(test.wavefunction)
-        print(test.EnergyExpectation())
+        training[i] = test.EnergyExpectation()
+        print(training[i])
+        if i>=5:
+            breaker = True
+            for j in range(4):
+                if abs(training[len(training)-j-1] - training[len(training)-j-2]) >= epsilon:
+                    breaker = False
+            if breaker==True:
+                return training
+
         test.UpdateOnce()
 
-Train()
+        i += 1
+        
+Train(0.0001)
+
