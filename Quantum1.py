@@ -60,7 +60,7 @@ class NeuralNet(object):
             self.weights.append(tempL)
         self.weights = np.array(self.weights)
         self.updateWF()
-    
+
     def updateWF(self):
         wf = []
         for i in range(2**self.N):#iterate through spin states
@@ -79,10 +79,9 @@ class NeuralNet(object):
         return wf
 
     def grad_psi(self):
-        del_psi = [0 for i in range(2**self.N)]
+        del_psi = np.zeros((2**self.N, self.N + self.M + self.N*self.M))
         for i in range(2**self.N):#iterate through spin states
             spin_state = state_from_iteration(self.N, i)
-            # param_index = 0
             
             db = np.array([self.wavefunction[i]*(np.tanh(np.dot(self.weights[:,j], spin_state) + self.b[j])) for j in range(self.M)])
 
@@ -90,11 +89,9 @@ class NeuralNet(object):
 
             da = np.array([spin_state[k]*self.wavefunction[i] for k in range(self.N)])
             
-            dpi = np.append(np.append(da,db),dw)
-            del_psi[i] = dpi
-        
-        return np.array(del_psi)
+            del_psi[i] = np.append(np.append(da,db),dw)            
 
+        return del_psi
     def grad_e(self):
         del_psi = self.grad_psi()
         bra_wf = np.transpose(self.wavefunction)
@@ -103,7 +100,6 @@ class NeuralNet(object):
         right = np.matmul(self.hamiltonian,del_psi)
         return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
- 
     def EnergyExpectation(self):
         Hsysn = Hsys(self.N, self.wavefunction)
         return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
