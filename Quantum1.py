@@ -261,19 +261,20 @@ corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlat
 #plt.title('Energy During Training')
 #plt.xlabel('Iteration')
 
-plt.figure(1)
-plt.bar(range(sites), MEEx)
-plt.figure(2)
-plt.bar(range(sites), MEEy)
-plt.figure(3)
-plt.bar(range(sites), MEEz)
+fig, axarr = plt.subplots(nrows=3,sharex=True)
+for i in range(3):
+    axarr[i].bar(range(sites),mag_list[i])
+    axarr[i].set_ylabel(['X','Y','Z'][i] + ' Magnetization')
+    plt.locator_params(nbins = len(mag_list[i]))
+plt.xlabel('Site')
+fig.suptitle('Magnetization of Sites')
 
 fig, axarr = plt.subplots(nrows=3,sharex=True)
 xs = [i for i in range(len(corr_list[0]) + 1) if i != test_site]
 for i in range(3):
     axarr[i].bar(xs,corr_list[i])
     axarr[i].set_ylabel(['X','Y','Z'][i] + ' Correlation')
-    plt.locator_params(nbins = len(corr_list))
+    plt.locator_params(nbins = len(corr_list[i]))
 
 plt.xlabel('Site')
 fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
