@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 sx = np.array([[0,1],[1,0]])
 sy = np.array([[0,-1j],[1j,0]])
@@ -233,40 +233,43 @@ def TrainIterations(N, M, rate, iterations, hamiltonian):
     return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
 
 def measure_and_plot(N,M,rate,iterations,test_site,h_function):
-    corr_list = np.zeros((iterations,3,N-1))#3 represents the x, y, and z correlations
+    corr_list = np.zeros((iterations,3,N-1)) #3 represents the x, y, and z correlations
     mag_list = np.zeros((iterations,3,N))
-    plt.figure(0)
+    # plt.figure(0)
     for n in range(iterations):
-        EE, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(N,M,rate,0.00001,h_function))
+        EE, wf, MEEx, MEEy, MEEz = np.real(TrainIterations(N,M,rate,200,h_function))
         #Plot the energies
-        plt.plot(EE)
+        # plt.plot(EE)
+        finalEnergy = np.around(EE[len(EE)-1],decimals=2)
+        # plt.annotate(str(finalEnergy), (len(EE), finalEnergy))
         corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
         mag_list[n] = np.array([MEEx,MEEy,MEEz])
+    
 
     mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
     corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
-    plt.title('Energy During Training')
-    plt.xlabel('Iteration')
+    # plt.title('Energy During Training')
+    # plt.xlabel('Iteration')
 
-    #plot magnetizations
-    fig, axarr = plt.subplots(nrows=3,sharex=True)
-    for i in range(3):
-        axarr[i].bar(range(N),mag_list[i])
-        axarr[i].set_ylabel(['X','Y','Z'][i] + ' Magnetization')
-        plt.locator_params(nbins = len(mag_list[i]))
-    plt.xlabel('Site')
-    fig.suptitle('Magnetization of Sites')
+    # #plot magnetizations
+    # fig, axarr = plt.subplots(nrows=3,sharex=True)
+    # for i in range(3):
+    #     axarr[i].bar(range(N),mag_list[i])
+    #     axarr[i].set_ylabel(['X','Y','Z'][i] + ' Magnetization')
+    #     plt.locator_params(nbins = len(mag_list[i]))
+    # plt.xlabel('Site')
+    # fig.suptitle('Magnetization of Sites')
 
-    #plot correlations
-    fig, axarr = plt.subplots(nrows=3,sharex=True)
-    xs = [i for i in range(len(corr_list[0]) + 1) if i != test_site]
-    for i in range(3):
-        axarr[i].bar(xs,corr_list[i])
-        axarr[i].set_ylabel(['X','Y','Z'][i] + ' Correlation')
-        plt.locator_params(nbins = len(corr_list[i]))
-    plt.xlabel('Site')
-    fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
+    # #plot correlations
+    # fig, axarr = plt.subplots(nrows=3,sharex=True)
+    # xs = [i for i in range(len(corr_list[0]) + 1) if i != test_site]
+    # for i in range(3):
+    #     axarr[i].bar(xs,corr_list[i])
+    #     axarr[i].set_ylabel(['X','Y','Z'][i] + ' Correlation')
+    #     plt.locator_params(nbins = len(corr_list[i]))
+    # plt.xlabel('Site')
+    # fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
 
-    plt.show()
+    # plt.show()
 
-measure_and_plot(3,3,0.1,10,0,Hamiltonian_heisenberg)
+measure_and_plot(6,4,0.01,10,0,Hamiltonian_heisenberg)
