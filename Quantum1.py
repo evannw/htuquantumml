@@ -1,5 +1,8 @@
 import numpy as np
 
+sx = np.array([[0,1],[1,0]])
+sy = np.array([[0,-1j],[1j,0]])
+sz = np.array([[1,0],[0,-1]])
 
 def norm(wavefunction):
     return np.sqrt(np.sum([x**2 for x in wavefunction]))
@@ -39,17 +42,36 @@ def Hamiltonian(N):
         Hsysn[i][i] = Hcoeff(N, state_from_iteration(N, i))
     return Hsysn
 
-
-def T_ising(N):
+def T_ising(N,J,h):
+    valStore = np.zeros((2**N,2**N))
+    finalVal = np.zeros((2**N,2**N))
     for i in range(N):
+        singleCurrent = np.array([1])
         for j in range(N):
-            np.matrix
-            polyX
-    numpy.kron
+            current = np.array([1])
+            for k in range(N):
+                if k!=i and k!=j:
+                    current = np.kron(current, np.identity(2))
+                    # valList.append(numpy.identity(2))
+                elif k == i:
+                    current = np.kron(current, sz)
+                else:
+                    current = np.kron(current, sz)
+            if j!=i:
+                singleCurrent = np.kron(singleCurrent, np.identity(2))
+            else:
+                singleCurrent = np.kron(singleCurrent, sx)
+            
+            valStore += J*current
+        finalVal += h*singleCurrent
+    return valStore+finalVal
 
+def T_isingWrapper(N):
+    return T_ising(N, 0.1, 0.1)
+        
 class NeuralNet(object):
 
-    def __init__(self, N, M, D):
+    def __init__(self, N, M, D, Hamiltonian):
         self.N = N
         self.M = M
         self.a = np.random.random(N)
@@ -57,7 +79,7 @@ class NeuralNet(object):
         #D is learning rate (used in update)
         self.D = D
         #Computes a generic hamiltonian matrix for size N
-        self.hamiltonian = Hamiltonian(N)
+        self.hamiltonian = Hamiltonian(self.N)
         self.weights = []
         self.wavefunction = []
         for i in range(N):
@@ -108,7 +130,8 @@ class NeuralNet(object):
         return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
     def EnergyExpectation(self):
-        Hsysn = Hsys(self.N, self.wavefunction)
+        Hsysn = np.matmul(self.hamiltonian, self.wavefunction)
+        # Hsysn = Hsys(self.N, self.wavefunction)
         return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
 
     def UpdateOnce(self):
@@ -124,12 +147,12 @@ class NeuralNet(object):
 
 
 def Train(epsilon):
-    test = NeuralNet(3,3,0.1)
+    test = NeuralNet(3,3,0.001, T_isingWrapper)
     training = []
     i = 0
     while(True):
-        print(test.wavefunction)
-        training[i] = test.EnergyExpectation()
+        # print(test.wavefunction)
+        training.append(test.EnergyExpectation())
         print(training[i])
         if i>=5:
             breaker = True
@@ -138,10 +161,8 @@ def Train(epsilon):
                     breaker = False
             if breaker==True:
                 return training
-
         test.UpdateOnce()
-
         i += 1
         
-Train(0.0001)
+Train(0.00001)
 
