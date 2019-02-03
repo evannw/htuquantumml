@@ -154,7 +154,7 @@ class NeuralNet(object):
         #Computes a generic hamiltonian matrix for size N
         self.hamiltonian = h_function(self.N)
         self.wavefunction = []
-        self.weights = np.random.rand(N,M)# + 1j*np.random.rand(N,M)
+        self.weights = np.random.rand(N,M) + 1j*np.random.rand(N,M)
         self.updateWF()
 
     def updateWF(self):
@@ -223,7 +223,7 @@ class NeuralNet(object):
 
 
 def Train(N, M, rate, epsilon):
-    test = NeuralNet(N,M, rate, Hamiltonian_heisenberg)
+    test = NeuralNet(N,M, rate, Hamiltonian)
     trainingEE = []
     i = 0
     while(True):
@@ -245,7 +245,7 @@ sites = 3
 hs = 3
 rate = 0.1
 iterations = 10
-test_site = 1
+test_site = 0
 corr_list = np.zeros((iterations,3,sites-1))#3 represents the x, y, and z correlations
 mag_list = np.zeros((iterations,3,sites))
 for n in range(iterations):
@@ -261,6 +261,7 @@ corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlat
 #plt.title('Energy During Training')
 #plt.xlabel('Iteration')
 
+#plot magnetizations
 fig, axarr = plt.subplots(nrows=3,sharex=True)
 for i in range(3):
     axarr[i].bar(range(sites),mag_list[i])
@@ -269,13 +270,13 @@ for i in range(3):
 plt.xlabel('Site')
 fig.suptitle('Magnetization of Sites')
 
+#plot correlations
 fig, axarr = plt.subplots(nrows=3,sharex=True)
 xs = [i for i in range(len(corr_list[0]) + 1) if i != test_site]
 for i in range(3):
     axarr[i].bar(xs,corr_list[i])
     axarr[i].set_ylabel(['X','Y','Z'][i] + ' Correlation')
     plt.locator_params(nbins = len(corr_list[i]))
-
 plt.xlabel('Site')
 fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
 
