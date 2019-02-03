@@ -90,6 +90,30 @@ def Hamiltonian_heisenberg(N):
         ham = ham + x_prod + y_prod + z_prod
     return ham
 
+def correlation(site,wavefunction,direction):
+    N = int(np.log2(len(wavefunction)))
+    product_terms = [np.identity(2) for i in range(N)]
+    if direction == 'x':
+        product_terms[site] = sx
+    elif direction == 'y':
+        product_terms[site] = sy
+    elif direction == 'z':
+        product_terms[site] = sz
+
+    product_list = []
+    for i in range(N):
+        if i == site:
+            continue
+        product_terms[i] = product_terms[site]
+        
+        prod = np.ones(1)
+        for term in product_terms:
+            prod = np.kron(prod,term)
+        prod = np.dot(np.conjugate(wavefunction),np.matmul(prod,wavefunction))
+        product_list.append(prod)
+        product_terms[i] = np.identity(2)
+    return product_list
+
 def T_isingWrapper(N):
     return T_ising(N, 0.1, 0.1)
         
@@ -166,25 +190,50 @@ class NeuralNet(object):
         self.updateWF()
 
 
-def Train(epsilon):
-    test = NeuralNet(3,3,0.1, T_isingWrapper)
+def Train(epsilon,sites,hs,rate):
+    test = NeuralNet(sites,hs,rate, Hamiltonian_heisenberg)
     training = []
     i = 0
     while(True):
         # print(test.wavefunction)
         training.append(test.EnergyExpectation())
-        print(training[i])
+        #print(training[i])
         if i>=5:
             breaker = True
             for j in range(4):
                 if abs(training[len(training)-j-1] - training[len(training)-j-2]) >= epsilon:
                     breaker = False
             if breaker==True:
-                return training
+                return [training,test.wavefunction]
         test.UpdateOnce()
         i += 1
-        
-energies = np.real(Train(0.00001))
-plt.figure(0)
-plt.plot(energies)
+
+sites = 5
+hs = 5
+rate = 0.1
+iterations = 10
+test_site = 1
+corr_list = np.zeros((iterations,3,sites-1))#3 represents the x, y, and z correlations
+for n in range(iterations):
+    [energies,wf] = np.real(Train(0.00001,sites,hs,rate))
+    corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
+
+corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
+
+#plt.figure(0)
+#plt.plot(energies)
+#plt.title('Energy During Training')
+#plt.xlabel('Iteration')
+
+fig, axarr = plt.subplots(nrows=3,sharex=True)
+xs = [i for i in range(len(corr_list[0]) + 1) if i != test_site]
+for i in range(3):
+    axarr[i].bar(xs,corr_list[i])
+    axarr[i].set_ylabel(['X','Y','Z'][i] + ' Correlation')
+    plt.locator_params(nbins = len(corr_list))
+
+plt.xlabel('Site')
+fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
+
+
 plt.show()
