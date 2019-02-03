@@ -1,5 +1,8 @@
 import numpy as np
 
+sx = np.array([[0,1],[1,0]])
+sy = np.array([[0,-1j],[1j,0]])
+sz = np.array([[1,0],[0,-1]])
 
 def norm(wavefunction):
     return np.sqrt(np.sum([x**2 for x in wavefunction]))
@@ -38,6 +41,9 @@ def Hamiltonian(N):
     for i in range(N): 
         Hsysn[i][i] = Hcoeff(N, state_from_iteration(N, i))
     return Hsysn
+
+def Hamiltonian_heisenberg(N):
+    
 
 class NeuralNet(object):
 
@@ -121,7 +127,7 @@ def Train(epsilon):
     i = 0
     while(True):
         print(test.wavefunction)
-        training[i] = test.EnergyExpectation()
+        training.append(test.EnergyExpectation())
         print(training[i])
         if i>=5:
             breaker = True
@@ -132,7 +138,6 @@ def Train(epsilon):
                 return training
 
         test.UpdateOnce()
-
         i += 1
         
 Train(0.0001)
