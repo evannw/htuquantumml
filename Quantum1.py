@@ -1,4 +1,5 @@
 import numpy as np
+
 # import matplotlib.pyplot as plt
 
 sx = np.array([[0,1],[1,0]])
@@ -19,13 +20,6 @@ def state_from_iteration(N, i):
         if spin == 0:
             i_arr[k] = -1
     return i_arr
-    
-#Returns a Hamiltonian diagonal matrix of size 2^nx2^n using Ising model
-def Hamiltonian(N):
-    Hsysn = np.zeros((2**N,2**N))
-    for i in range(N): 
-        Hsysn[i][i] = Hcoeff(N, state_from_iteration(N, i))
-    return Hsysn
 
 #Returns a Hamiltonian diagonal matrix of size 2^nx2^n using T_Ising model
 def T_ising(N,J,h):
@@ -233,6 +227,9 @@ def TrainIterations(N, M, rate, iterations, hamiltonian):
     return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
 
 def measure_and_plot(N,M,rate,iterations,test_site,h_function):
+    SC = open("SpinCorrelations.txt", "w")
+    MZ = open("Magnetizations.txt", "w")
+    EE = open("EnergyExpectations.txt", "w")
     corr_list = np.zeros((iterations,3,N-1)) #3 represents the x, y, and z correlations
     mag_list = np.zeros((iterations,3,N))
     #plt.figure(0)
@@ -241,22 +238,32 @@ def measure_and_plot(N,M,rate,iterations,test_site,h_function):
     energies_list = [[] for i in range(iterations)]
     max_len = 0
     for n in range(iterations):
-        EE, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(N,M,rate,0.00001,h_function))
-
+        energies, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(N,M,rate,0.00001,h_function))
         corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
         mag_list[n] = np.array([MEEx,MEEy,MEEz])
         #plt.plot(EE)
-        finalEnergy = np.around(EE[len(EE)-1],decimals=2)
+        # finalEnergy = np.around(EE[len(EE)-1],decimals=2)
         # plt.annotate(str(finalEnergy), (len(EE), finalEnergy))
-        energies_list[n] = EE
-        if len(EE) > max_len:
-            max_len = len(EE)
+        energies_list[n] = energies
+        if len(energies) > max_len:
+            max_len = len(energies)
+    EE.write("[")
     for i in range(len(energies_list)):
         last = energies_list[i][-1]
         energies_list[i] = energies_list[i] + [last for j in range(max_len - len(energies_list[i]))]
+        if i != 0:
+            EE.write("), array(" + str(energies_list[i]))
+        else:
+            EE.write("array(" + str(energies_list[0]))
+    EE.write(")]")
     mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
+    MZ.write(str(mag_list))
     corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
+    SC.write(str(corr_list))
 
+    EE.close()
+    MZ.close()
+    SC.close()
     # plt.figure(0)
     # for EE in energies_list:
     #     plt.plot(EE)
@@ -283,4 +290,4 @@ def measure_and_plot(N,M,rate,iterations,test_site,h_function):
 
     # plt.show()
 
-measure_and_plot(6,4,0.01,10,0,Hamiltonian_heisenberg)
+measure_and_plot(6,4,0.01,1,0,Hamiltonian_heisenberg)
