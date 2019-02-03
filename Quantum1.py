@@ -71,7 +71,7 @@ def T_ising(N,J,h):
 def Hamiltonian_heisenberg(N):
     ham = np.zeros((2**N,2**N))
     for i in range(N-1):
-        product_terms = [np.identity(2) for i in range(N)]
+        product_terms = [np.identity(2) for j in range(N)]
         #compute x products
         product_terms[i:i+2] = [sx,sx]
         x_prod = np.ones(1)
@@ -116,7 +116,7 @@ def correlation(site,wavefunction,direction):
     return product_list
 
 def T_isingWrapper(N):
-    return T_ising(N, 0.1, 0.1)
+    return T_ising(N, 1, 0.001)
 
 def magnetization(N):
     valStoreX = []
@@ -154,7 +154,8 @@ class NeuralNet(object):
         #Computes a generic hamiltonian matrix for size N
         self.hamiltonian = h_function(self.N)
         self.wavefunction = []
-        self.weights = np.random.rand(N,M)# + 1j*np.random.rand(N,M)
+        self.weights = np.random.rand(N,M) + 1j*np.random.rand(N,M)
+        # self.weights = np.random.normal(N,M)
         self.updateWF()
 
     def updateWF(self):
@@ -222,8 +223,8 @@ class NeuralNet(object):
         self.updateWF()
 
 
-def Train(N, M, rate, epsilon):
-    test = NeuralNet(N,M, rate, Hamiltonian_heisenberg)
+def TrainEpsilon(N, M, rate, epsilon, hamiltonian):
+    test = NeuralNet(N,M, rate, hamiltonian)
     trainingEE = []
     i = 0
     while(True):
@@ -241,25 +242,40 @@ def Train(N, M, rate, epsilon):
                 return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
         test.UpdateOnce()
         i += 1
-sites = 3
-hs = 3
-rate = 0.1
-iterations = 10
+
+def TrainIterations(N, M, rate, iterations, hamiltonian):
+    test = NeuralNet(N,M, rate, hamiltonian)
+    trainingEE = []
+    for i in range(iterations):
+        # print(test.wavefunction)
+        trainingEE.append(test.EnergyExpectation())
+        test.UpdateOnce()
+    MEEx, MEEy, MEEz = test.MagnetizationEE()
+    return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
+sites = 6
+hs = 4
+rate = 0.01
+iterations = 5
 test_site = 1
 corr_list = np.zeros((iterations,3,sites-1))#3 represents the x, y, and z correlations
 mag_list = np.zeros((iterations,3,sites))
+plt.figure(0)
 for n in range(iterations):
-    EE, wf, MEEx, MEEy, MEEz = np.real(Train(sites,hs,rate,0.00001))
+    EE, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(sites,hs,rate,0.0001, Hamiltonian_heisenberg))
+    # EE, wf, MEEx, MEEy, MEEz = np.real(TrainIterations(sites,hs,rate, 200, T_isingWrapper))
+    plt.plot(EE)
     corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
     mag_list[n] = np.array([MEEx,MEEy,MEEz])
+    
+plt.title('Energy During Training')
+plt.xlabel('Iteration')
 
 mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
 corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
 
-#plt.figure(0)
-#plt.plot(energies)
-#plt.title('Energy During Training')
-#plt.xlabel('Iteration')
+
+
+
 
 fig, axarr = plt.subplots(nrows=3,sharex=True)
 for i in range(3):
