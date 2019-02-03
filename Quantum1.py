@@ -19,22 +19,6 @@ def state_from_iteration(N, i):
         if spin == 0:
             i_arr[k] = -1
     return i_arr
-
-#state is a vector state of system
-def Hcoeff(N, state):
-    #The Ising hamiltonian in 1D
-    H = 0
-    for i in range(N-1):
-        H += (state[i])*(state[i+1])
-    return H
-
-#wavefunction is a vector of length 2^n
-#returns a vector that's a modified wavefunction
-def Hsys(N, wavefunction):
-    Hsysn = np.zeros(2**N)
-    for i,coeff in enumerate(wavefunction): 
-        Hsysn[i] = (Hcoeff(N, state_from_iteration(N, i))*coeff)
-    return Hsysn
     
 #Returns a Hamiltonian diagonal matrix of size 2^nx2^n using Ising model
 def Hamiltonian(N):
@@ -198,11 +182,6 @@ class NeuralNet(object):
 
     def EnergyExpectation(self):
         return np.dot(np.conjugate(self.wavefunction),np.matmul(self.hamiltonian,self.wavefunction))/norm(self.wavefunction)
-        #Hsysn = Hsys(self.N, self.wavefunction)
-        #return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
-        #Hsysn = np.matmul(self.hamiltonian, self.wavefunction)
-        # Hsysn = Hsys(self.N, self.wavefunction)
-        #return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
     
     def MagnetizationEE(self):
         operatorX, operatorY, operatorZ = magnetization(self.N)
@@ -222,7 +201,7 @@ class NeuralNet(object):
                 self.weights[i][j] -= self.D*gradient[self.N+self.M+self.M*i+j]
         self.updateWF()
 
-
+#Train until energy converges to within epsilon
 def TrainEpsilon(N, M, rate, epsilon, hamiltonian):
     test = NeuralNet(N,M, rate, hamiltonian)
     trainingEE = []
@@ -231,7 +210,6 @@ def TrainEpsilon(N, M, rate, epsilon, hamiltonian):
         # print(test.wavefunction)
 
         trainingEE.append(test.EnergyExpectation())
-        
         if i>=5:
             breaker = True
             for j in range(4):
@@ -243,6 +221,7 @@ def TrainEpsilon(N, M, rate, epsilon, hamiltonian):
         test.UpdateOnce()
         i += 1
 
+#Train over a certain number of iterations
 def TrainIterations(N, M, rate, iterations, hamiltonian):
     test = NeuralNet(N,M, rate, hamiltonian)
     trainingEE = []
@@ -252,47 +231,42 @@ def TrainIterations(N, M, rate, iterations, hamiltonian):
         test.UpdateOnce()
     MEEx, MEEy, MEEz = test.MagnetizationEE()
     return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
-sites = 6
-hs = 4
-rate = 0.01
-iterations = 5
-test_site = 1
-corr_list = np.zeros((iterations,3,sites-1))#3 represents the x, y, and z correlations
-mag_list = np.zeros((iterations,3,sites))
-plt.figure(0)
-for n in range(iterations):
-    EE, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(sites,hs,rate,0.0001, Hamiltonian_heisenberg))
-    # EE, wf, MEEx, MEEy, MEEz = np.real(TrainIterations(sites,hs,rate, 200, T_isingWrapper))
-    plt.plot(EE)
-    corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
-    mag_list[n] = np.array([MEEx,MEEy,MEEz])
-    
-plt.title('Energy During Training')
-plt.xlabel('Iteration')
 
-mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
-corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
+def measure_and_plot(N,M,rate,iterations,test_site,h_function):
+    corr_list = np.zeros((iterations,3,N-1))#3 represents the x, y, and z correlations
+    mag_list = np.zeros((iterations,3,N))
+    plt.figure(0)
+    for n in range(iterations):
+        EE, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(N,M,rate,0.00001,h_function))
+        #Plot the energies
+        plt.plot(EE)
+        corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
+        mag_list[n] = np.array([MEEx,MEEy,MEEz])
 
+    mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
+    corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
+    plt.title('Energy During Training')
+    plt.xlabel('Iteration')
 
+    #plot magnetizations
+    fig, axarr = plt.subplots(nrows=3,sharex=True)
+    for i in range(3):
+        axarr[i].bar(range(N),mag_list[i])
+        axarr[i].set_ylabel(['X','Y','Z'][i] + ' Magnetization')
+        plt.locator_params(nbins = len(mag_list[i]))
+    plt.xlabel('Site')
+    fig.suptitle('Magnetization of Sites')
 
+    #plot correlations
+    fig, axarr = plt.subplots(nrows=3,sharex=True)
+    xs = [i for i in range(len(corr_list[0]) + 1) if i != test_site]
+    for i in range(3):
+        axarr[i].bar(xs,corr_list[i])
+        axarr[i].set_ylabel(['X','Y','Z'][i] + ' Correlation')
+        plt.locator_params(nbins = len(corr_list[i]))
+    plt.xlabel('Site')
+    fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
 
+    plt.show()
 
-fig, axarr = plt.subplots(nrows=3,sharex=True)
-for i in range(3):
-    axarr[i].bar(range(sites),mag_list[i])
-    axarr[i].set_ylabel(['X','Y','Z'][i] + ' Magnetization')
-    plt.locator_params(nbins = len(mag_list[i]))
-plt.xlabel('Site')
-fig.suptitle('Magnetization of Sites')
-
-fig, axarr = plt.subplots(nrows=3,sharex=True)
-xs = [i for i in range(len(corr_list[0]) + 1) if i != test_site]
-for i in range(3):
-    axarr[i].bar(xs,corr_list[i])
-    axarr[i].set_ylabel(['X','Y','Z'][i] + ' Correlation')
-    plt.locator_params(nbins = len(corr_list[i]))
-
-plt.xlabel('Site')
-fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
-
-plt.show()
+measure_and_plot(3,3,0.1,10,0,Hamiltonian_heisenberg)
