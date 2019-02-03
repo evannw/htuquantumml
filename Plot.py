@@ -36,4 +36,4 @@ def plot(N, test_site, spinCorrelations, magnetizations, energyExpectations):
 
     plt.show()
 
-plot(20,0,"corr_list.npy","mag_list.npy","energies_list.npy")
+plot(14,0,"corr_list.npy","mag_list.npy","energies_list.npy")
