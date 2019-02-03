@@ -67,7 +67,7 @@ def Hamiltonian_heisenberg(N):
 
 class NeuralNet(object):
 
-    def __init__(self, N, M, D):
+    def __init__(self, N, M, D, hfunc):
         self.N = N
         self.M = M
         self.a = np.random.random(N)
@@ -75,7 +75,7 @@ class NeuralNet(object):
         #D is learning rate (used in update)
         self.D = D
         #Computes a generic hamiltonian matrix for size N
-        self.hamiltonian = Hamiltonian_heisenberg(N)
+        self.hamiltonian = hfunc(N)
         self.weights = []
         self.wavefunction = []
         for i in range(N):
@@ -126,8 +126,9 @@ class NeuralNet(object):
         return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
     def EnergyExpectation(self):
-        Hsysn = Hsys(self.N, self.wavefunction)
-        return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
+        return np.dot(self.wavefunction,np.matmul(self.hamiltonian,self.wavefunction))
+        #Hsysn = Hsys(self.N, self.wavefunction)
+        #return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
 
     def UpdateOnce(self):
         gradient = self.grad_e()
@@ -142,7 +143,7 @@ class NeuralNet(object):
 
 
 def Train(epsilon):
-    test = NeuralNet(5,5,0.1)
+    test = NeuralNet(2,2,0.1,Hamiltonian_heisenberg)
     training = []
     i = 0
     while(True):
