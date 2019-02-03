@@ -233,27 +233,29 @@ def TrainIterations(N, M, rate, iterations, hamiltonian):
     return trainingEE, test.wavefunction, MEEx, MEEy, MEEz
 
 def measure_and_plot(N,M,rate,iterations,test_site,h_function):
+    #plt.figure(0)
     corr_list = np.zeros((iterations,3,N-1))#3 represents the x, y, and z correlations
     mag_list = np.zeros((iterations,3,N))
     energies_list = [[] for i in range(iterations)]
     max_len = 0
     for n in range(iterations):
-
         EE, wf, MEEx, MEEy, MEEz = np.real(TrainEpsilon(N,M,rate,0.00001,h_function))
 
         corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
         mag_list[n] = np.array([MEEx,MEEy,MEEz])
+        #plt.plot(EE)
         energies_list[n] = EE
         if len(EE) > max_len:
             max_len = len(EE)
     for i in range(len(energies_list)):
-        last = EE[-1]
-        energies_list[i] = EE + [last for j in range(max_len - len(EE))]
+        last = energies_list[i][-1]
+        energies_list[i] = energies_list[i] + [last for j in range(max_len - len(energies_list[i]))]
     mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
     corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
 
     plt.figure(0)
-    [plt.plot(energies) for energies in energies_list]
+    for EE in energies_list:
+        plt.plot(EE)
     plt.title('Energy During Training')
     plt.xlabel('Iteration')
     #plot magnetizations
@@ -277,4 +279,4 @@ def measure_and_plot(N,M,rate,iterations,test_site,h_function):
 
     plt.show()
 
-measure_and_plot(3,3,0.1,10,0,Hamiltonian_heisenberg)
+measure_and_plot(3,3,0.01,3,0,Hamiltonian_heisenberg)
