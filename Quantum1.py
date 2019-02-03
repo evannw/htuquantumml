@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 sx = np.array([[0,1],[1,0]])
 sy = np.array([[0,-1j],[1j,0]])
@@ -118,7 +119,7 @@ def magnetization(N):
 
 class NeuralNet(object):
 
-    def __init__(self, N, M, D, Hamiltonian):
+    def __init__(self, N, M, D, h_function):
         self.N = N
         self.M = M
         self.a = np.random.random(N)
@@ -126,16 +127,9 @@ class NeuralNet(object):
         #D is learning rate (used in update)
         self.D = D
         #Computes a generic hamiltonian matrix for size N
-        self.hamiltonian = Hamiltonian(self.N)
-        self.weights = []
+        self.hamiltonian = h_function(self.N)
         self.wavefunction = []
-        for i in range(N):
-            tempL = []
-            for j in range(M):
-                # tempL.append(np.random.normal(N,N-1)*np.sqrt(2/(N-1)))
-                tempL.append(np.random.random())
-            self.weights.append(tempL)
-        self.weights = np.array(self.weights)
+        self.weights = np.random.rand(N,M)# + 1j*np.random.rand(N,M)
         self.updateWF()
 
     def updateWF(self):
@@ -174,7 +168,7 @@ class NeuralNet(object):
         bra_wf = np.conjugate(self.wavefunction)
 
         right = np.matmul(self.hamiltonian,del_psi)
-        return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
+        return 2*(np.real(np.matmul(bra_wf,right)) - self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
     def EnergyExpectation(self):
         return np.dot(np.conjugate(self.wavefunction),np.matmul(self.hamiltonian,self.wavefunction))/norm(self.wavefunction)
@@ -197,7 +191,7 @@ class NeuralNet(object):
 
 
 def Train(epsilon):
-    test = NeuralNet(3,3,0.001, T_isingWrapper)
+    test = NeuralNet(3,3,0.1, T_isingWrapper)
     training = []
     i = 0
     while(True):
@@ -214,5 +208,7 @@ def Train(epsilon):
         test.UpdateOnce()
         i += 1
         
-Train(0.00001)
-
+energies = np.real(Train(0.00001))
+plt.figure(0)
+plt.plot(energies)
+plt.show()
