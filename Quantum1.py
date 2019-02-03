@@ -120,13 +120,13 @@ class NeuralNet(object):
         return del_psi
     def grad_e(self):
         del_psi = self.grad_psi()
-        bra_wf = np.transpose(self.wavefunction)
+        bra_wf = np.conjugate(self.wavefunction)
 
         right = np.matmul(self.hamiltonian,del_psi)
         return 2*(np.real(np.matmul(bra_wf,right)) + self.EnergyExpectation()*np.real(np.matmul(bra_wf,del_psi)))/norm(self.wavefunction)
 
     def EnergyExpectation(self):
-        return np.dot(self.wavefunction,np.matmul(self.hamiltonian,self.wavefunction))
+        return np.dot(np.conjugate(self.wavefunction),np.matmul(self.hamiltonian,self.wavefunction))/norm(self.wavefunction)
         #Hsysn = Hsys(self.N, self.wavefunction)
         #return np.dot(self.wavefunction, Hsysn)/norm(self.wavefunction)
 
@@ -143,7 +143,7 @@ class NeuralNet(object):
 
 
 def Train(epsilon):
-    test = NeuralNet(2,2,0.1,Hamiltonian_heisenberg)
+    test = NeuralNet(3,3,0.1,Hamiltonian_heisenberg)
     training = []
     i = 0
     while(True):
