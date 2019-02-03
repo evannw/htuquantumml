@@ -181,9 +181,9 @@ class NeuralNet(object):
     
     def MagnetizationEE(self):
         operatorX, operatorY, operatorZ = magnetization(self.N)
-        operatorX = [np.dot(np.conjugate(self.wavefunction),np.matmul(x,self.wavefunction))/norm(self.wavefunction) for x in operatorX]
-        operatorY = [np.dot(np.conjugate(self.wavefunction),np.matmul(y,self.wavefunction))/norm(self.wavefunction) for y in operatorY]
-        operatorZ = [np.dot(np.conjugate(self.wavefunction),np.matmul(z,self.wavefunction))/norm(self.wavefunction) for z in operatorZ]
+        operatorX = np.real([np.dot(np.conjugate(self.wavefunction),np.matmul(x,self.wavefunction))/norm(self.wavefunction) for x in operatorX])
+        operatorY = np.real([np.dot(np.conjugate(self.wavefunction),np.matmul(y,self.wavefunction))/norm(self.wavefunction) for y in operatorY])
+        operatorZ = np.real([np.dot(np.conjugate(self.wavefunction),np.matmul(z,self.wavefunction))/norm(self.wavefunction) for z in operatorZ])
         return operatorX, operatorY, operatorZ
 
     def UpdateOnce(self):
@@ -199,7 +199,7 @@ class NeuralNet(object):
 
 
 def Train(N, M, epsilon):
-    test = NeuralNet(N, M, 0.1, T_isingWrapper)
+    test = NeuralNet(N, M, 0.1, Hamiltonian_heisenberg)
     trainingEE = []
     i = 0
     while(True):
@@ -221,7 +221,13 @@ def Train(N, M, epsilon):
 EE, MEEx, MEEy, MEEz = np.real(Train(3, 3, 0.00001))
 plt.figure(0)
 plt.plot(EE)
+plt.figure(1)
+print(MEEx)
 plt.bar(range(3), MEEx)
+plt.figure(2)
+print(MEEy)
 plt.bar(range(3), MEEy)
+plt.figure(3)
+print(MEEz)
 plt.bar(range(3), MEEz)
 plt.show()
