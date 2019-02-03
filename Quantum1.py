@@ -139,7 +139,7 @@ def Train(epsilon):
         test.UpdateOnce()
         i += 1
         
-Train()
+Train(0.0001)
 # test1 = NeuralNet(2, 2, 0, 0, 1)
 # test1.psi()
 # print(test1.EnergyExpectation())
