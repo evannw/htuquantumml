@@ -55,7 +55,7 @@ def T_ising(N,J,h):
 def Hamiltonian_heisenberg(N):
     ham = np.zeros((2**N,2**N))
     for i in range(N-1):
-        product_terms = [np.identity(2) for i in range(N)]
+        product_terms = [np.identity(2) for j in range(N)]
         #compute x products
         product_terms[i:i+2] = [sx,sx]
         x_prod = np.ones(1)
@@ -223,11 +223,18 @@ def Train(N, M, rate, epsilon, h_function):
 def measure_and_plot(N,M,rate,iterations,test_site,h_function):
     corr_list = np.zeros((iterations,3,N-1))#3 represents the x, y, and z correlations
     mag_list = np.zeros((iterations,3,N))
+    energies_list = [[] for i in range(iterations)]
+    max_len = 0
     for n in range(iterations):
         EE, wf, MEEx, MEEy, MEEz = np.real(Train(N,M,rate,0.00001,h_function))
         corr_list[n] = np.array([correlation(test_site,wf,s) for s in ['x','y','z']])
         mag_list[n] = np.array([MEEx,MEEy,MEEz])
-
+        energies_list[n] = EE
+        if len(EE) > max_len:
+            max_len = len(EE)
+    for i in range(len(energies_list)):
+        last = EE[-1]
+        energies_list[i] = EE + [last for j in range(max_len - len(EE))]
     mag_list = list(np.sum(mag_list,axis = 0)/iterations)#average magnetizations
     corr_list = list(np.sum(corr_list,axis=0)/iterations)#calculate average correlations
 
