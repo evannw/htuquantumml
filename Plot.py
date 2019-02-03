@@ -2,12 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def plot(spinCorrelations, magnetizations, energyExpectations):
-    SC = open(spinCorrelations, "r")
-    MZ = open(magnetizations, "r")
-    EE = open(energyExpectations, "r")
-    energies_list = np.loadtxt(EE)
-    mag_list = np.loadtxt(MZ)
-    spinC_list = np.loadtxt(SC)
+    energies_list = np.load(energyExpectations)
+    mag_list = np.load(magnetizations)
+    spinC_list = np.load(spinCorrelations)
     finalEnergy = np.around(EE[len(EE)-1],decimals=2)
     plt.annotate(str(finalEnergy), (len(EE), finalEnergy))
     plt.figure(0)
@@ -35,3 +32,5 @@ def plot(spinCorrelations, magnetizations, energyExpectations):
     fig.suptitle('Correlation of Site ' + str(test_site) + ' with Other Sites')
 
     plt.show()
+
+plot('corr_list.npy','mag_list.npy','energies_list.npy')
